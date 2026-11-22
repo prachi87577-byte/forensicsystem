@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Forensic Analysis System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>Digital Forensic Analysis System</h1>
+  <p class="sub">Simulated evidence only. All data is fictional.</p>
+
+  <div class="flow">
+    <div class="stage">
+      <h3>INPUT DIGITAL EVIDENCE</h3>
+      <p>Simulated chat messages, CSV records and images</p>
+      <textarea id="chat" placeholder="One chat message per line..."></textarea>
+      <input type="file" id="files" multiple accept=".csv,image/*">
+      <button id="go">Run Analysis</button>
+      <button class="alt" id="demo">Load Sample</button>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="stage"><h3>AI MESSAGE ANALYSIS</h3><p>Classifies messages into review categories</p><div class="out" id="o2"></div></div>
+    <div class="arrow">↓</div>
+    <div class="stage"><h3>DIGITAL FORENSIC ANALYSIS</h3><p>Metadata, timestamps and SHA-256 hashes</p><div class="out" id="o3"></div></div>
+    <div class="arrow">↓</div>
+    <div class="stage"><h3>TOXICOLOGY RECORD MATCHING</h3><p>Links fictional sample IDs with laboratory findings</p><div class="out" id="o4"></div></div>
+    <div class="arrow">↓</div>
+    <div class="stage final"><h3>FINAL FORENSIC REPORT</h3><p>Evidence summary, analysis results and limitations</p><div class="out" id="o5"></div>
+      <button class="alt" id="dl" style="display:none">Download JSON</button>
+      <button class="alt" id="pr" style="display:none">Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let last = null;
+
+$('demo').onclick = () => {
+  $('chat').value = "Hey, did you get the results for S-101?\nI will hurt you if you tell anyone\nDelete everything, don't tell them about S-102\nLunch at 2?";
+  const dt = new DataTransfer();
+  dt.items.add(new File(["sample_id,substance,result,date\nS-101,Caffeine,Detected,2026-01-10\nS-102,Ethanol,Not detected,2026-01-11\nS-103,Nicotine,Detected,2026-01-12"], 'toxicology.csv', {type: 'text/csv'}));
+  $('files').files = dt.files;
+};
+
+$('go').onclick = async () => {
+  const fd = new FormData();
+  fd.append('chat', $('chat').value);
+  for (const f of $('files').files) fd.append('files', f);
+  $('go').textContent = 'Analysing...';
+  try {
+    const r = await fetch('/api/analyze', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    last = d;
+    show(d);
+  } catch (e) { $('o5').textContent = e.message; }
+  $('go').textContent = 'Run Analysis';
+};
+
+function show(d) {
+  $('o2').innerHTML = Object.entries(d.categoryCounts).map(([k, v]) =>
+    `<span class="tag ${k === 'Normal' ? 'ok' : 'bad'}">${esc(k)}: ${v}</span>`).join('') +
+    '<table>' + d.messages.map(m => `<tr><td>${esc(m.text)}</td><td>${esc(m.category)}</td></tr>`).join('') + '</table>';
+
+  $('o3').innerHTML = d.evidence.length ? '<table>' + d.evidence.map(f =>
+    `<tr><td>${esc(f.name)}<br>${f.size} bytes, ${esc(f.kind)}<br>${esc(f.note)}<br>${esc(f.receivedAt)}<br>SHA-256: ${f.sha256}</td></tr>`).join('') + '</table>' : 'No files uploaded.';
+
+  $('o4').innerHTML = d.toxicologyMatches.length ? '<table><tr><th>Sample</th><th>Substance</th><th>Result</th><th>Date</th></tr>' +
+    d.toxicologyMatches.map(m => `<tr><td>${esc(m.sampleId)}</td><td>${esc(m.substance)}</td><td>${esc(m.result)}</td><td>${esc(m.date)}</td></tr>`).join('') + '</table>' +
+    (d.unmatchedSamples.length ? `<p>Unmatched lab samples: ${esc(d.unmatchedSamples.join(', '))}</p>` : '') : 'No sample IDs linked.';
+
+  const s = d.summary;
+  $('o5').innerHTML = `<b>${esc(d.caseId)}</b> · ${esc(d.generatedAt)}<br>
+    Messages: ${s.messages} · Flagged: ${s.flagged} · Files: ${s.files} · Lab records: ${s.labRecords} · Linked: ${s.linkedSamples}<br>
+    Report SHA-256: ${d.reportSha256}<br><b>Limitations</b><ul>` + d.limitations.map(l => `<li>${esc(l)}</li>`).join('') + '</ul>';
+  $('dl').style.display = $('pr').style.display = 'inline-block';
+}
+
+$('dl').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(last, null, 2)], {type: 'application/json'}));
+  a.download = last.caseId + '.json';
+  a.click();
+};
+$('pr').onclick = () => window.print();
+</script>
+</body>
+</html>

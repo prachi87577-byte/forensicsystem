@@ -1,0 +1,21 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #000; color: #eee; font-family: system-ui, sans-serif; padding: 16px; }
+.wrap { max-width: 760px; margin: auto; }
+h1 { text-align: center; font-weight: 600; }
+.sub { text-align: center; color: #888; margin-top: -8px; }
+.flow { border: 1px solid #333; border-radius: 16px; padding: 14px; margin: 16px 0; }
+.stage { background: #0a0f1c; border-radius: 10px; padding: 14px; text-align: center; }
+.stage.final { background: #08160c; }
+.stage h3 { margin: 0 0 4px; letter-spacing: .5px; font-size: 16px; }
+.stage p { margin: 0; color: #9aa; font-size: 13px; }
+.stage .out { text-align: left; margin-top: 10px; font-size: 13px; word-break: break-all; }
+.arrow { text-align: center; color: #888; padding: 6px 0; }
+textarea, input[type=file] { width: 100%; background: #111; color: #eee; border: 1px solid #333; border-radius: 8px; padding: 10px; margin-top: 8px; }
+textarea { min-height: 110px; }
+button { background: #2f6bff; color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; margin: 10px 8px 0 0; cursor: pointer; }
+button.alt { background: #222; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 10px; background: #222; margin: 2px; font-size: 12px; }
+.tag.bad { background: #5a1a1a; }
+.tag.ok { background: #1a4a24; }
+table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+td, th { border-bottom: 1px solid #222; padding: 4px; text-align: left; vertical-align: top; }
